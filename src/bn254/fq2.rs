@@ -1,9 +1,9 @@
 use super::fq::{Fq, NEGATIVE_ONE};
 use super::LegendreSymbol;
-use crate::arithmetic::BaseExt;
 use core::convert::TryInto;
 use core::ops::{Add, Mul, Neg, Sub};
 use ff::Field;
+use pairing::arithmetic::BaseExt;
 use rand::RngCore;
 use std::cmp::Ordering;
 use std::io::{self, Read, Write};

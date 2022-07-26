@@ -2,11 +2,12 @@
 use super::assembly::assembly_field;
 use super::common::common_field;
 use super::LegendreSymbol;
-use crate::arithmetic::{adc, mac, sbb, BaseExt, FieldExt, Group};
+use crate::arithmetic::{adc, mac, sbb};
 use core::convert::TryInto;
 use core::fmt;
 use core::ops::{Add, Mul, Neg, Sub};
 use ff::PrimeField;
+use pairing::arithmetic::{BaseExt, FieldExt, Group};
 use rand::RngCore;
 use std::io::{self, Read, Write};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
