@@ -1,5 +1,5 @@
 [package]
-name = "pairing_bn256"
+name = "pairing_bn254"
 version = "0.1.1"
 authors = [
   "Sean Bowe <ewillbefull@gmail.com>",
@@ -8,8 +8,6 @@ authors = [
   "Alex Gluchowski <alex@gluchowski.net>"
 ]
 license = "MIT/Apache-2.0"
-edition = "2018"
-repository = "https://github.com/kilic/pairing"
 readme = "README.md"
 description = "BN254 elliptic curve and pairing implementation"
 
