@@ -2,12 +2,13 @@
 #![feature(asm_const)]
 
 #[macro_use]
-// mod ec;
-#[macro_use]
 mod binops;
+#[macro_use]
+mod derive;
 
 pub(crate) mod arithmetic;
 pub mod bn254;
+pub mod secp256k1;
 
 pub extern crate group;
 

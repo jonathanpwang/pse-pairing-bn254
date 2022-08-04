@@ -531,4 +531,158 @@ macro_rules! common_field {
     };
 }
 
+#[macro_export]
+macro_rules! field_specific {
+    ($field:ident, sparse) => {
+        impl $field {
+            /// Adds `rhs` to `self`, returning the result.
+            #[inline]
+            pub const fn add(&self, rhs: &Self) -> Self {
+                let (d0, carry) = adc(self.0[0], rhs.0[0], 0);
+                let (d1, carry) = adc(self.0[1], rhs.0[1], carry);
+                let (d2, carry) = adc(self.0[2], rhs.0[2], carry);
+                let (d3, _) = adc(self.0[3], rhs.0[3], carry);
+
+                // Attempt to subtract the modulus, to ensure the value
+                // is smaller than the modulus.
+                (&$field([d0, d1, d2, d3])).sub(&MODULUS)
+            }
+
+            #[allow(clippy::too_many_arguments)]
+            #[inline(always)]
+            pub(crate) const fn montgomery_reduce(
+                r0: u64,
+                r1: u64,
+                r2: u64,
+                r3: u64,
+                r4: u64,
+                r5: u64,
+                r6: u64,
+                r7: u64,
+            ) -> $field {
+                // The Montgomery reduction here is based on Algorithm 14.32 in
+                // Handbook of Applied Cryptography
+                // <http://cacr.uwaterloo.ca/hac/about/chap14.pdf>.
+
+                let k = r0.wrapping_mul(INV);
+                let (_, carry) = mac(r0, k, MODULUS.0[0], 0);
+                let (r1, carry) = mac(r1, k, MODULUS.0[1], carry);
+                let (r2, carry) = mac(r2, k, MODULUS.0[2], carry);
+                let (r3, carry) = mac(r3, k, MODULUS.0[3], carry);
+                let (r4, carry2) = adc(r4, 0, carry);
+
+                let k = r1.wrapping_mul(INV);
+                let (_, carry) = mac(r1, k, MODULUS.0[0], 0);
+                let (r2, carry) = mac(r2, k, MODULUS.0[1], carry);
+                let (r3, carry) = mac(r3, k, MODULUS.0[2], carry);
+                let (r4, carry) = mac(r4, k, MODULUS.0[3], carry);
+                let (r5, carry2) = adc(r5, carry2, carry);
+
+                let k = r2.wrapping_mul(INV);
+                let (_, carry) = mac(r2, k, MODULUS.0[0], 0);
+                let (r3, carry) = mac(r3, k, MODULUS.0[1], carry);
+                let (r4, carry) = mac(r4, k, MODULUS.0[2], carry);
+                let (r5, carry) = mac(r5, k, MODULUS.0[3], carry);
+                let (r6, carry2) = adc(r6, carry2, carry);
+
+                let k = r3.wrapping_mul(INV);
+                let (_, carry) = mac(r3, k, MODULUS.0[0], 0);
+                let (r4, carry) = mac(r4, k, MODULUS.0[1], carry);
+                let (r5, carry) = mac(r5, k, MODULUS.0[2], carry);
+                let (r6, carry) = mac(r6, k, MODULUS.0[3], carry);
+                let (r7, _) = adc(r7, carry2, carry);
+
+                // Result may be within MODULUS of the correct value
+                (&$field([r4, r5, r6, r7])).sub(&MODULUS)
+            }
+        }
+    };
+    ($field:ident, dense) => {
+        impl $field {
+            /// Adds `rhs` to `self`, returning the result.
+            #[inline]
+            pub const fn add(&self, rhs: &Self) -> Self {
+                let (d0, carry) = adc(self.0[0], rhs.0[0], 0);
+                let (d1, carry) = adc(self.0[1], rhs.0[1], carry);
+                let (d2, carry) = adc(self.0[2], rhs.0[2], carry);
+                let (d3, carry) = adc(self.0[3], rhs.0[3], carry);
+
+                // Attempt to subtract the modulus, to ensure the value
+                // is smaller than the modulus.
+                let (d0, borrow) = sbb(d0, MODULUS.0[0], 0);
+                let (d1, borrow) = sbb(d1, MODULUS.0[1], borrow);
+                let (d2, borrow) = sbb(d2, MODULUS.0[2], borrow);
+                let (d3, borrow) = sbb(d3, MODULUS.0[3], borrow);
+                let (_, borrow) = sbb(carry, 0, borrow);
+
+                let (d0, carry) = adc(d0, MODULUS.0[0] & borrow, 0);
+                let (d1, carry) = adc(d1, MODULUS.0[1] & borrow, carry);
+                let (d2, carry) = adc(d2, MODULUS.0[2] & borrow, carry);
+                let (d3, _) = adc(d3, MODULUS.0[3] & borrow, carry);
+
+                $field([d0, d1, d2, d3])
+            }
+
+            #[allow(clippy::too_many_arguments)]
+            #[inline(always)]
+            pub(crate) const fn montgomery_reduce(
+                r0: u64,
+                r1: u64,
+                r2: u64,
+                r3: u64,
+                r4: u64,
+                r5: u64,
+                r6: u64,
+                r7: u64,
+            ) -> Self {
+                // The Montgomery reduction here is based on Algorithm 14.32 in
+                // Handbook of Applied Cryptography
+                // <http://cacr.uwaterloo.ca/hac/about/chap14.pdf>.
+
+                let k = r0.wrapping_mul(INV);
+                let (_, carry) = mac(r0, k, MODULUS.0[0], 0);
+                let (r1, carry) = mac(r1, k, MODULUS.0[1], carry);
+                let (r2, carry) = mac(r2, k, MODULUS.0[2], carry);
+                let (r3, carry) = mac(r3, k, MODULUS.0[3], carry);
+                let (r4, carry2) = adc(r4, 0, carry);
+
+                let k = r1.wrapping_mul(INV);
+                let (_, carry) = mac(r1, k, MODULUS.0[0], 0);
+                let (r2, carry) = mac(r2, k, MODULUS.0[1], carry);
+                let (r3, carry) = mac(r3, k, MODULUS.0[2], carry);
+                let (r4, carry) = mac(r4, k, MODULUS.0[3], carry);
+                let (r5, carry2) = adc(r5, carry2, carry);
+
+                let k = r2.wrapping_mul(INV);
+                let (_, carry) = mac(r2, k, MODULUS.0[0], 0);
+                let (r3, carry) = mac(r3, k, MODULUS.0[1], carry);
+                let (r4, carry) = mac(r4, k, MODULUS.0[2], carry);
+                let (r5, carry) = mac(r5, k, MODULUS.0[3], carry);
+                let (r6, carry2) = adc(r6, carry2, carry);
+
+                let k = r3.wrapping_mul(INV);
+                let (_, carry) = mac(r3, k, MODULUS.0[0], 0);
+                let (r4, carry) = mac(r4, k, MODULUS.0[1], carry);
+                let (r5, carry) = mac(r5, k, MODULUS.0[2], carry);
+                let (r6, carry) = mac(r6, k, MODULUS.0[3], carry);
+                let (r7, carry2) = adc(r7, carry2, carry);
+
+                // Result may be within MODULUS of the correct value
+                let (d0, borrow) = sbb(r4, MODULUS.0[0], 0);
+                let (d1, borrow) = sbb(r5, MODULUS.0[1], borrow);
+                let (d2, borrow) = sbb(r6, MODULUS.0[2], borrow);
+                let (d3, borrow) = sbb(r7, MODULUS.0[3], borrow);
+                let (_, borrow) = sbb(carry2, 0, borrow);
+
+                let (d0, carry) = adc(d0, MODULUS.0[0] & borrow, 0);
+                let (d1, carry) = adc(d1, MODULUS.0[1] & borrow, carry);
+                let (d2, carry) = adc(d2, MODULUS.0[2] & borrow, carry);
+                let (d3, _) = adc(d3, MODULUS.0[3] & borrow, carry);
+
+                $field([d0, d1, d2, d3])
+            }
+        }
+    };
+}
+
 pub(crate) use common_field;
