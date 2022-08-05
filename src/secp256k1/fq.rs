@@ -108,7 +108,7 @@ const DELTA: Fq = Fq::zero();
 
 impl_binops_additive!(Fq, Fq);
 impl_binops_multiplicative!(Fq, Fq);
-common_field!(
+field_common!(
     Fq,
     MODULUS,
     INV,
@@ -118,6 +118,7 @@ common_field!(
     DELTA,
     ZETA
 );
+field_arithmetic!(Fq, dense);
 
 impl Fq {
     pub const fn size() -> usize {

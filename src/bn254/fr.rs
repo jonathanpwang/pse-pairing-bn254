@@ -2,7 +2,6 @@
 use super::assembly::assembly_field;
 use super::LegendreSymbol;
 use crate::arithmetic::{adc, mac, sbb};
-use crate::derive::field::common_field;
 use core::convert::TryInto;
 use core::fmt;
 use core::ops::{Add, Mul, Neg, Sub};
@@ -99,7 +98,7 @@ const ZETA: Fr = Fr::from_raw([
 
 impl_binops_additive!(Fr, Fr);
 impl_binops_multiplicative!(Fr, Fr);
-common_field!(
+field_common!(
     Fr,
     MODULUS,
     INV,
@@ -109,6 +108,10 @@ common_field!(
     DELTA,
     ZETA
 );
+#[cfg(any(not(feature = "asm"), not(target_arch = "x86_64")))]
+field_arithmetic!(Fr, sparse);
+#[cfg(all(feature = "asm", target_arch = "x86_64"))]
+assembly_field!(Fr, MODULUS, INV);
 
 impl Fr {
     pub fn legendre(&self) -> LegendreSymbol {

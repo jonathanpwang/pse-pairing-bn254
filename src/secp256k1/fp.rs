@@ -62,7 +62,7 @@ const R2: Fp = Fp([0x000007a2000e90a1, 0x1, 0, 0]);
 /// 0x100000b73002bb1e33795f671
 const R3: Fp = Fp([0x002bb1e33795f671, 0x100000b73, 0, 0]);
 
-/// 1 / 2 mod p
+/// 1 / 2 mod (p-1)
 const TWO_INV: Fp = Fp::from_raw([
     0xffffffff7ffffe18,
     0xffffffffffffffff,
@@ -76,7 +76,7 @@ const ROOT_OF_UNITY_INV: Fp = Fp::zero();
 
 impl_binops_additive!(Fp, Fp);
 impl_binops_multiplicative!(Fp, Fp);
-common_field!(
+field_common!(
     Fp,
     MODULUS,
     INV,
@@ -86,22 +86,11 @@ common_field!(
     DELTA,
     ZETA
 );
+field_arithmetic!(Fp, dense);
 
 impl Fp {
     pub const fn size() -> usize {
         32
-    }
-
-    /// Attempts to convert a little-endian byte representation of
-    /// a scalar into a `Fr`, failing if the input is not canonical.
-    pub fn from_bytes(bytes: &[u8; 32]) -> CtOption<Fp> {
-        <Self as ff::PrimeField>::from_repr(*bytes)
-    }
-
-    /// Converts an element of `Fr` into a byte representation in
-    /// little-endian byte order.
-    pub fn to_bytes(&self) -> [u8; 32] {
-        <Self as ff::PrimeField>::to_repr(self)
     }
 }
 
